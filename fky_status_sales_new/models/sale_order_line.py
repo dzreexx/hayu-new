@@ -5,7 +5,7 @@ class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
     
     # On-hand quantity in the order warehouse stock location
-    on_hand_qty = fields.Float(
+    on_hand_qty = fields.Integer(
         string='On-Hand Qty',
         compute='_compute_quantities',
         store=False,
@@ -13,7 +13,7 @@ class SaleOrderLine(models.Model):
     )
     
     # Available quantity: physical stock in location not reserved for other orders
-    available_qty = fields.Float(
+    available_qty = fields.Integer(
         string='Available Qty',
         compute='_compute_quantities',
         store=False,
