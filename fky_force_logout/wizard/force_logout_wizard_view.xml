@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_force_logout_wizard_form" model="ir.ui.view">
+        <field name="name">force.logout.wizard.form</field>
+        <field name="model">force.logout.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Force Logout All Users">
+                <p class="alert alert-warning" role="alert">
+                    Are you sure you want to log out ALL users?
+                    <br/>
+                    This will invalidate all current sessions immediately. Users (including yourself) will be redirected to the login page on their next action.
+                </p>
+                <footer>
+                    <button string="Logout All Users" name="action_logout" type="object" class="btn-danger"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>
