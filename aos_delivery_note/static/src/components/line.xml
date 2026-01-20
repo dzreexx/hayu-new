@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t owl="1" t-inherit="stock_barcode.LineComponent" t-inherit-mode="extension">
+        <!-- Add delivery note at the end of line details section -->
+        <xpath expr="//div[hasclass('o_barcode_line_details')]" position="inside">
+            <div t-if="line.delivery_note" name="delivery_note" class="o_barcode_line_note">
+                <i class="fa fa-fw fa-sticky-note-o"/>
+                <span class="text-danger font-italic" t-esc="line.delivery_note"/>
+            </div>
+        </xpath>
+    </t>
+
+</templates>
