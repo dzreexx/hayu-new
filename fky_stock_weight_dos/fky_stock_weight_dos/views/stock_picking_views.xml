@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_stock_move_line_detailed_operation_tree_weight_dos" model="ir.ui.view">
+        <field name="name">stock.move.line.detailed.operation.tree.weight.dos</field>
+        <field name="model">stock.move.line</field>
+        <field name="inherit_id" ref="stock.view_stock_move_line_detailed_operation_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='qty_done']" position="after">
+                <field name="estimated_weight_dos" sum="Estimated Weight" optional="show"/>
+                <field name="total_weight_dos" sum="Total Weight" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
