@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Tree View (Report List) -->
+        <record id="sold_unsold_report_tree_view" model="ir.ui.view">
+            <field name="name">sold.unsold.products.report.tree</field>
+            <field name="model">sold.unsold.products.report</field>
+            <field name="arch" type="xml">
+                <tree string="Sold &amp; Unsold Products Reports">
+                    <field name="name"/>
+                    <field name="filter_type"/>
+                    <field name="report_type"/>
+                    <field name="month" optional="hide"/>
+                    <field name="year" optional="hide"/>
+                    <field name="date_from"/>
+                    <field name="date_to"/>
+                    <field name="total_sold_products"/>
+                    <field name="total_unsold_products"/>
+                    <field name="categ_ids" widget="many2many_tags" optional="hide"/>
+                    <field name="internal_category_ids" widget="many2many_tags" optional="hide"/>
+                    <field name="customer_ids" widget="many2many_tags" optional="hide"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Form View -->
+        <record id="sold_unsold_report_form_view" model="ir.ui.view">
+            <field name="name">sold.unsold.products.report.form</field>
+            <field name="model">sold.unsold.products.report</field>
+            <field name="arch" type="xml">
+                <form string="Sold &amp; Unsold Products Report">
+                    <header>
+                        <button name="action_generate_report"
+                                string="Generate Report"
+                                type="object"
+                                class="oe_highlight"/>
+                        <button name="action_export_excel"
+                                string="Export to Excel"
+                                type="object"
+                                class="btn-secondary"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name" readonly="1"/>
+                            </h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="filter_type" widget="radio"/>
+                                <field name="month" attrs="{'invisible': [('filter_type', '=', 'custom')], 'required': [('filter_type', '=', 'monthly')]}"/>
+                                <field name="year" attrs="{'invisible': [('filter_type', '=', 'custom')], 'required': [('filter_type', '=', 'monthly')]}"/>
+                            </group>
+                            <group>
+                                <field name="date_from" attrs="{'readonly': [('filter_type', '=', 'monthly')], 'required': [('filter_type', '=', 'custom')]}"/>
+                                <field name="date_to" attrs="{'readonly': [('filter_type', '=', 'monthly')], 'required': [('filter_type', '=', 'custom')]}"/>
+                                <field name="report_type" widget="radio"/>
+                                <field name="categ_ids" widget="many2many_tags" options="{'no_create': True}" placeholder="All product categories"/>
+                                <field name="internal_category_ids" widget="many2many_tags" options="{'no_create': True}" placeholder="All internal categories"/>
+                                <field name="customer_ids" widget="many2many_tags" options="{'no_create': True}" placeholder="All customers" domain="[('customer_rank', '>', 0)]"/>
+                                <field name="total_sold_products" readonly="1" attrs="{'invisible': [('report_type', '=', 'unsold')]}"/>
+                                <field name="total_unsold_products" readonly="1" attrs="{'invisible': [('report_type', '=', 'sold')]}"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="Sold Products" name="sold_products" attrs="{'invisible': [('report_type', '=', 'unsold')]}">
+                                <field name="sold_line_ids">
+                                    <tree string="Products Sold">
+                                        <field name="product_name"/>
+                                        <field name="default_code"/>
+                                        <field name="categ_id"/>
+                                        <field name="internal_category_id"/>
+                                        <field name="sold_qty" sum="Total Qty Sold"/>
+                                        <field name="sold_amount" widget="monetary" sum="Total Amount"/>
+                                        <field name="order_count" sum="Total Orders"/>
+                                        <field name="qty_available"/>
+                                        <field name="list_price" widget="monetary" optional="hide"/>
+                                        <field name="last_sale_date"/>
+                                        <field name="last_sale_price" widget="monetary" optional="hide"/>
+                                        <field name="currency_id" invisible="1"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="Unsold Products" name="unsold_products" attrs="{'invisible': [('report_type', '=', 'sold')]}">
+                                <div class="alert alert-info" role="alert" style="margin-bottom: 8px;">
+                                    <strong>Note:</strong> "Unsold" means products with <b>no sales in the selected period</b>.
+                                    The "Last Sale Date" column shows when the product was last sold at <b>any time</b> (for reference).
+                                </div>
+                                <field name="unsold_line_ids">
+                                    <tree string="Products Not Sold">
+                                        <field name="product_name"/>
+                                        <field name="default_code"/>
+                                        <field name="categ_id"/>
+                                        <field name="internal_category_id"/>
+                                        <field name="qty_available"/>
+                                        <field name="list_price" widget="monetary"/>
+                                        <field name="last_sale_date"/>
+                                        <field name="last_sale_price" widget="monetary" optional="show"/>
+                                        <field name="currency_id" invisible="1"/>
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Search View -->
+        <record id="sold_unsold_report_search_view" model="ir.ui.view">
+            <field name="name">sold.unsold.products.report.search</field>
+            <field name="model">sold.unsold.products.report</field>
+            <field name="arch" type="xml">
+                <search string="Search Reports">
+                    <field name="name"/>
+                    <field name="month"/>
+                    <field name="year"/>
+                    <field name="categ_ids"/>
+                    <field name="internal_category_ids"/>
+                    <field name="customer_ids"/>
+                    <filter string="This Year" name="this_year"
+                            domain="[('year', '=', context_today().year)]"/>
+                    <filter string="Last Year" name="last_year"
+                            domain="[('year', '=', context_today().year - 1)]"/>
+                    <group expand="0" string="Group By">
+                        <filter string="Year" name="group_year" context="{'group_by': 'year'}"/>
+                        <filter string="Month" name="group_month" context="{'group_by': 'month'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- Action -->
+        <record id="action_sold_unsold_report" model="ir.actions.act_window">
+            <field name="name">Sold &amp; Unsold Products</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">sold.unsold.products.report</field>
+            <field name="view_mode">tree,form</field>
+            <field name="context">{'search_default_this_year': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create a new Sales Report
+                </p>
+                <p>
+                    This report helps you identify products that have been sold
+                    and products with zero sales during a specific period. 
+                    Choose between monthly filter or custom date range, 
+                    then click "Generate Report".
+                </p>
+            </field>
+        </record>
+
+        <!-- Menu Item under Notify Stock Dashboard -->
+        <menuitem id="menu_sold_unsold_report"
+                  name="Sold &amp; Unsold Products"
+                  parent="aos_notify_stock.stock_notify_dashboard_menu"
+                  action="action_sold_unsold_report"
+                  sequence="100"/>
+
+        <!-- Cleanup Menu Item (Admin Only) -->
+        <menuitem id="menu_cleanup_old_reports"
+                  name="Delete Old Sales Reports"
+                  parent="aos_notify_stock.stock_notify_dashboard_menu"
+                  action="action_cleanup_old_sold_unsold_reports"
+                  groups="base.group_system"
+                  sequence="101"/>
+
+    </data>
+</odoo>

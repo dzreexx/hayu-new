@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Cleanup Wizard Form View -->
+    <record id="view_cleanup_sold_unsold_reports_wizard_form" model="ir.ui.view">
+        <field name="name">cleanup.sold.unsold.reports.wizard.form</field>
+        <field name="model">cleanup.sold.unsold.reports.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Cleanup Old Reports">
+                <group>
+                    <group>
+                        <field name="months_old"/>
+                    </group>
+                </group>
+                <footer>
+                    <button name="action_cleanup" string="Delete Old Reports" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action to Open Cleanup Wizard -->
+    <record id="action_cleanup_old_sold_unsold_reports" model="ir.actions.act_window">
+        <field name="name">Cleanup Old Reports</field>
+        <field name="res_model">cleanup.sold.unsold.reports.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sold_unsold_report_user,access.sold.unsold.products.report.user,model_sold_unsold_products_report,sales_team.group_sale_salesman,1,1,1,1
+access_sold_unsold_report_manager,access.sold.unsold.products.report.manager,model_sold_unsold_products_report,sales_team.group_sale_manager,1,1,1,1
+access_sold_unsold_report_line_user,access.sold.unsold.products.report.line.user,model_sold_unsold_products_report_line,sales_team.group_sale_salesman,1,1,1,1
+access_sold_unsold_report_line_manager,access.sold.unsold.products.report.line.manager,model_sold_unsold_products_report_line,sales_team.group_sale_manager,1,1,1,1
+access_cleanup_sold_unsold_wizard_admin,access.cleanup.sold.unsold.reports.wizard.admin,model_cleanup_sold_unsold_reports_wizard,base.group_system,1,1,1,1
