@@ -29,6 +29,7 @@ Features:
         'views/sold_unsold_report_views.xml',
     ],
     'installable': True,
+    'uninstall_hook': 'uninstall_hook',
     'application': False,
     'auto_install': False,
 }

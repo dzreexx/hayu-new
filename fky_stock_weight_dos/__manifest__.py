@@ -10,5 +10,6 @@
         'views/stock_picking_views.xml',
     ],
     'installable': True,
+    'uninstall_hook': 'uninstall_hook',
     'application': False,
 }

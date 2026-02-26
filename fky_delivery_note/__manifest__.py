@@ -23,6 +23,7 @@
     },
     'demo': [],
     'installable': True,
+    'uninstall_hook': 'uninstall_hook',
     "auto_install": False,
     "application": False,
 }

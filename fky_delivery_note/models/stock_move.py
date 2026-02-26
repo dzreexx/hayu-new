@@ -11,25 +11,30 @@ class StockMove(models.Model):
         This ensures notes carry over in multi-step transfers (e.g. Toko → Transit → Gudang).
         """
         res = super(StockMove, self)._action_assign()
-        for move in self:
-            if move.move_orig_ids:
-                # Collect notes from origin move lines grouped by product
-                origin_lines = move.move_orig_ids.mapped('move_line_ids').filtered(
-                    lambda l: l.delivery_note
-                )
-                if origin_lines:
-                    for move_line in move.move_line_ids:
-                        if not move_line.delivery_note:
-                            # Find matching origin line by product (and lot if applicable)
-                            matching = origin_lines.filtered(
-                                lambda l: l.product_id == move_line.product_id
-                            )
-                            if move_line.lot_id:
-                                lot_match = matching.filtered(
-                                    lambda l: l.lot_id == move_line.lot_id
-                                )
-                                if lot_match:
-                                    matching = lot_match
-                            if matching:
-                                move_line.delivery_note = matching[0].delivery_note
+        moves_with_orig = self.filtered(lambda m: m.move_orig_ids)
+        if moves_with_orig:
+            for move in moves_with_orig:
+                # Group origin lines by product_id and (optionally) lot_id
+                origin_lines = move.move_orig_ids.mapped('move_line_ids').filtered(lambda l: l.delivery_note)
+                if not origin_lines:
+                    continue
+                
+                # Pre-map them for fast lookup
+                note_map = {}
+                for l in origin_lines:
+                    key = (l.product_id.id, l.lot_id.id if l.lot_id else False)
+                    if key not in note_map:
+                        note_map[key] = l.delivery_note
+                
+                # Apply to current move lines
+                for move_line in move.move_line_ids:
+                    if not move_line.delivery_note:
+                        key = (move_line.product_id.id, move_line.lot_id.id if move_line.lot_id else False)
+                        # Fallback to product-only match if full key doesn't match
+                        fallback_key = (move_line.product_id.id, False)
+                        
+                        if key in note_map:
+                            move_line.delivery_note = note_map[key]
+                        elif fallback_key in note_map:
+                            move_line.delivery_note = note_map[fallback_key]
         return res

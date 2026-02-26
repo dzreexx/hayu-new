@@ -57,6 +57,10 @@ class SoldUnsoldReport(models.Model):
                                            compute='_compute_totals', store=True)
     total_sold_products = fields.Integer(string='Total Sold Products',
                                          compute='_compute_totals', store=True)
+    state = fields.Selection([
+        ('draft', 'Draft'),
+        ('generated', 'Generated'),
+    ], string='Status', default='draft', readonly=True)
 
     @api.depends('filter_type', 'month', 'year', 'date_from', 'date_to')
     def _compute_name(self):
@@ -118,6 +122,7 @@ class SoldUnsoldReport(models.Model):
             ('move_id.invoice_date', '<=', self.date_to),
             ('move_id.state', '=', 'posted'),
             ('move_id.move_type', '=', 'out_invoice'),
+            ('exclude_from_invoice_tab', '=', False),
             ('product_id', '!=', False),
         ]
         if self.customer_ids:
@@ -134,6 +139,7 @@ class SoldUnsoldReport(models.Model):
             ('move_id.invoice_date', '<=', self.date_to),
             ('move_id.state', '=', 'posted'),
             ('move_id.move_type', '=', 'out_invoice'),
+            ('exclude_from_invoice_tab', '=', False),
             ('product_id', '!=', False),
         ])
         all_sold_products = all_invoice_lines_in_period.mapped('product_id')
@@ -189,28 +195,34 @@ class SoldUnsoldReport(models.Model):
 
         # --- UNSOLD PRODUCTS ---
         if self.report_type in ('both', 'unsold'):
+            last_sale_data = {}
+            if unsold_products:
+                self.env.cr.execute("""
+                    SELECT DISTINCT ON (l.product_id)
+                        l.product_id,
+                        COALESCE(m.invoice_date, m.date) AS last_date,
+                        l.price_unit
+                    FROM account_move_line l
+                    JOIN account_move m ON l.move_id = m.id
+                    WHERE l.product_id IN %s
+                      AND m.state = 'posted'
+                      AND m.move_type = 'out_invoice'
+                      AND l.exclude_from_invoice_tab = False
+                      AND l.company_id IN %s
+                    ORDER BY l.product_id, COALESCE(m.invoice_date, m.date) DESC, l.id DESC
+                """, [tuple(unsold_products.ids), tuple(self.env.companies.ids) if hasattr(self.env, 'companies') else tuple([self.env.company.id])])
+                
+                for row in self.env.cr.fetchall():
+                    last_sale_data[row[0]] = {'date': row[1], 'price': row[2]}
+
             for product in unsold_products:
-                # Get last sale info if product was ever sold (any time) based on invoices
-                last_sale_domain = [
-                    ('product_id', '=', product.id),
-                    ('move_id.state', '=', 'posted'),
-                    ('move_id.move_type', '=', 'out_invoice'),
-                ]
-                # Unsold last sale date should also not be affected by the customer filter
-                # It just shows when it was last sold to ANYONE
-                invoice_lines = self.env['account.move.line'].search(last_sale_domain, order='id desc', limit=100)
-
-                last_sale_line = False
-                if invoice_lines:
-                    # Sort by invoice_date, handling missing invoice_date fallback to date
-                    last_sale_line = max(invoice_lines, key=lambda l: l.move_id.invoice_date or l.move_id.date)
-
+                data = last_sale_data.get(product.id)
                 lines_vals.append({
                     'report_id': self.id,
                     'line_type': 'unsold',
                     'product_id': product.id,
-                    'last_sale_date': (last_sale_line.move_id.invoice_date or last_sale_line.move_id.date) if last_sale_line else False,
-                    'last_sale_price': last_sale_line.price_unit if last_sale_line else False,
+                    'last_sale_date': data['date'] if data else False,
+                    'last_sale_price': data['price'] if data else False,
                 })
             unsold_count = len(unsold_products)
 
@@ -232,6 +244,8 @@ class SoldUnsoldReport(models.Model):
             msg_parts.append(f'{unsold_count} unsold')
         msg = ' and '.join(msg_parts)
 
+        self.write({'state': 'generated'})
+
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
@@ -242,6 +256,13 @@ class SoldUnsoldReport(models.Model):
                 'sticky': False,
             }
         }
+
+    def action_reset_draft(self):
+        self.ensure_one()
+        self.env['sold.unsold.products.report.line'].search([
+            ('report_id', '=', self.id)
+        ]).unlink()
+        self.write({'state': 'draft'})
 
     def action_export_excel(self):
         self.ensure_one()
