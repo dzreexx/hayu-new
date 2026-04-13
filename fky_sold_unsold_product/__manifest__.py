@@ -25,7 +25,6 @@ Features:
     'depends': ['sale', 'product', 'stock', 'aos_product_adireksa', 'aos_notify_stock'],
     'data': [
         'security/ir.model.access.csv',
-        'wizard/cleanup_old_reports_views.xml',
         'views/sold_unsold_report_views.xml',
     ],
     'installable': True,

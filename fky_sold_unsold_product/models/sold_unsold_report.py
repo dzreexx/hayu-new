@@ -38,8 +38,6 @@ class SoldUnsoldReport(models.Model):
         ('sold', 'Sold Only'),
         ('unsold', 'Unsold Only'),
     ], string='Generate', required=True, default='both')
-    categ_ids = fields.Many2many('product.category', string='Product Categories',
-                                 help='Leave empty to include all categories')
     internal_category_ids = fields.Many2many('internal.category', string='Internal Categories',
                                              help='Leave empty to include all internal categories')
     customer_ids = fields.Many2many('res.partner', string='Customers',
@@ -109,9 +107,7 @@ class SoldUnsoldReport(models.Model):
             ('sale_ok', '=', True),
             ('active', '=', True),
         ]
-        # Filter by selected categories if any
-        if self.categ_ids:
-            product_domain.append(('categ_id', 'child_of', self.categ_ids.ids))
+        # Filter by selected internal categories if any
         if self.internal_category_ids:
             product_domain.append(('internal_category', 'in', self.internal_category_ids.ids))
         all_products = self.env['product.product'].search(product_domain)
@@ -153,8 +149,8 @@ class SoldUnsoldReport(models.Model):
 
         # --- SOLD PRODUCTS ---
         if self.report_type in ('both', 'sold'):
-            # Filter invoice lines to only include products in our category filter
-            if self.categ_ids or self.internal_category_ids:
+            # Filter invoice lines to only include products in our internal category filter
+            if self.internal_category_ids:
                 invoice_lines_in_period = invoice_lines_in_period.filtered(
                     lambda l: l.product_id in all_products
                 )
@@ -197,7 +193,7 @@ class SoldUnsoldReport(models.Model):
         if self.report_type in ('both', 'unsold'):
             last_sale_data = {}
             if unsold_products:
-                self.env.cr.execute("""
+                sql_query = """
                     SELECT DISTINCT ON (l.product_id)
                         l.product_id,
                         COALESCE(m.invoice_date, m.date) AS last_date,
@@ -209,8 +205,21 @@ class SoldUnsoldReport(models.Model):
                       AND m.move_type = 'out_invoice'
                       AND l.exclude_from_invoice_tab = False
                       AND l.company_id IN %s
+                """
+                sql_params = [
+                    tuple(unsold_products.ids),
+                    tuple(self.env.companies.ids) if hasattr(self.env, 'companies') else tuple([self.env.company.id])
+                ]
+                
+                if self.customer_ids:
+                    sql_query += " AND m.partner_id IN %s"
+                    sql_params.append(tuple(self.customer_ids.ids))
+                    
+                sql_query += """
                     ORDER BY l.product_id, COALESCE(m.invoice_date, m.date) DESC, l.id DESC
-                """, [tuple(unsold_products.ids), tuple(self.env.companies.ids) if hasattr(self.env, 'companies') else tuple([self.env.company.id])])
+                """
+                
+                self.env.cr.execute(sql_query, sql_params)
                 
                 for row in self.env.cr.fetchall():
                     last_sale_data[row[0]] = {'date': row[1], 'price': row[2]}
@@ -307,7 +316,7 @@ class SoldUnsoldReport(models.Model):
 
         if self.report_type in ('both', 'sold'):
             sheet_sold = workbook.add_worksheet('Sold Products')
-            headers_sold = ['Product Name', 'Internal Reference', 'Product Category', 'Internal Category', 'Qty Sold', 'Total Sales Amount', 'No. of Orders', 'Quantity On Hand', 'Sales Price', 'Last Sale Date', 'Last Sale Price']
+            headers_sold = ['Product Name', 'Internal Reference', 'Internal Category', 'Qty Sold', 'Total Sales Amount', 'No. of Orders', 'Quantity On Hand', 'Sales Price', 'Last Sale Date', 'Last Sale Price']
             for col_num, header in enumerate(headers_sold):
                 sheet_sold.write(0, col_num, header, header_format)
             sheet_sold.set_column(0, 0, 30)
@@ -317,23 +326,22 @@ class SoldUnsoldReport(models.Model):
             for line in self.sold_line_ids.sorted(lambda l: l.product_name or ''):
                 sheet_sold.write(row, 0, line.product_name or '', text_format)
                 sheet_sold.write(row, 1, line.default_code or '', text_format)
-                sheet_sold.write(row, 2, line.categ_id.display_name or '', text_format)
-                sheet_sold.write(row, 3, line.internal_category_id.display_name or '', text_format)
-                sheet_sold.write(row, 4, line.sold_qty or 0.0, text_format)
-                sheet_sold.write(row, 5, line.sold_amount or 0.0, money_format)
-                sheet_sold.write(row, 6, line.order_count or 0, text_format)
-                sheet_sold.write(row, 7, line.qty_available or 0.0, text_format)
-                sheet_sold.write(row, 8, line.list_price or 0.0, money_format)
+                sheet_sold.write(row, 2, line.internal_category_id.display_name or '', text_format)
+                sheet_sold.write(row, 3, line.sold_qty or 0.0, text_format)
+                sheet_sold.write(row, 4, line.sold_amount or 0.0, money_format)
+                sheet_sold.write(row, 5, line.order_count or 0, text_format)
+                sheet_sold.write(row, 6, line.qty_available or 0.0, text_format)
+                sheet_sold.write(row, 7, line.list_price or 0.0, money_format)
                 if line.last_sale_date:
-                    sheet_sold.write_datetime(row, 9, line.last_sale_date, date_format)
+                    sheet_sold.write_datetime(row, 8, line.last_sale_date, date_format)
                 else:
-                    sheet_sold.write(row, 9, '', text_format)
-                sheet_sold.write(row, 10, line.last_sale_price or 0.0, money_format)
+                    sheet_sold.write(row, 8, '', text_format)
+                sheet_sold.write(row, 9, line.last_sale_price or 0.0, money_format)
                 row += 1
 
         if self.report_type in ('both', 'unsold'):
             sheet_unsold = workbook.add_worksheet('Unsold Products')
-            headers_unsold = ['Product Name', 'Internal Reference', 'Product Category', 'Internal Category', 'Quantity On Hand', 'Sales Price', 'Last Sale Date (Any Time)', 'Last Sale Price']
+            headers_unsold = ['Product Name', 'Internal Reference', 'Internal Category', 'Quantity On Hand', 'Sales Price', 'Last Sale Date (Any Time)', 'Last Sale Price']
             for col_num, header in enumerate(headers_unsold):
                 sheet_unsold.write(0, col_num, header, header_format)
             sheet_unsold.set_column(0, 0, 30)
@@ -343,15 +351,14 @@ class SoldUnsoldReport(models.Model):
             for line in self.unsold_line_ids.sorted(lambda l: l.product_name or ''):
                 sheet_unsold.write(row, 0, line.product_name or '', text_format)
                 sheet_unsold.write(row, 1, line.default_code or '', text_format)
-                sheet_unsold.write(row, 2, line.categ_id.display_name or '', text_format)
-                sheet_unsold.write(row, 3, line.internal_category_id.display_name or '', text_format)
-                sheet_unsold.write(row, 4, line.qty_available or 0.0, text_format)
-                sheet_unsold.write(row, 5, line.list_price or 0.0, money_format)
+                sheet_unsold.write(row, 2, line.internal_category_id.display_name or '', text_format)
+                sheet_unsold.write(row, 3, line.qty_available or 0.0, text_format)
+                sheet_unsold.write(row, 4, line.list_price or 0.0, money_format)
                 if line.last_sale_date:
-                    sheet_unsold.write_datetime(row, 6, line.last_sale_date, date_format)
+                    sheet_unsold.write_datetime(row, 5, line.last_sale_date, date_format)
                 else:
-                    sheet_unsold.write(row, 6, '', text_format)
-                sheet_unsold.write(row, 7, line.last_sale_price or 0.0, money_format)
+                    sheet_unsold.write(row, 5, '', text_format)
+                sheet_unsold.write(row, 6, line.last_sale_price or 0.0, money_format)
                 row += 1
 
         workbook.close()
@@ -389,8 +396,6 @@ class SoldUnsoldReportLine(models.Model):
     product_id = fields.Many2one('product.product', string='Product', required=True)
     product_name = fields.Char(string='Product Name', related='product_id.display_name', store=True)
     default_code = fields.Char(string='Internal Reference', related='product_id.default_code', store=True)
-    categ_id = fields.Many2one('product.category', string='Product Category',
-                                related='product_id.categ_id', store=True)
     internal_category_id = fields.Many2one('internal.category', string='Internal Category',
                                             related='product_id.internal_category', store=True)
     qty_available = fields.Float(string='Quantity On Hand', related='product_id.qty_available')
@@ -404,3 +409,28 @@ class SoldUnsoldReportLine(models.Model):
     sold_qty = fields.Float(string='Qty Sold')
     sold_amount = fields.Float(string='Total Sales Amount')
     order_count = fields.Integer(string='No. of Orders')
+
+    def action_view_invoices(self):
+        """Open the specific invoices that make up the sold quantity for this product."""
+        self.ensure_one()
+        report = self.report_id
+        
+        domain = [
+            ('state', '=', 'posted'),
+            ('move_type', '=', 'out_invoice'),
+            ('invoice_date', '>=', report.date_from),
+            ('invoice_date', '<=', report.date_to),
+            ('invoice_line_ids.product_id', '=', self.product_id.id),
+        ]
+        
+        if report.customer_ids:
+            domain.append(('partner_id', 'in', report.customer_ids.ids))
+            
+        return {
+            'name': f'Invoices for {self.product_name}',
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.move',
+            'view_mode': 'tree,form',
+            'domain': domain,
+            'context': {'create': False, 'default_move_type': 'out_invoice'},
+        }

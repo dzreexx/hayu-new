@@ -26,20 +26,57 @@ class SaleOrderLine(models.Model):
         ('unavailable', 'Unavailable')
     ], compute='_compute_availability_status', store=False)
     
+    # Other Warehouses quantities
+    other_on_hand_qty = fields.Integer(
+        string='Other On-Hand',
+        compute='_compute_quantities',
+        store=False,
+        help='Physical quantity on hand in other internal locations'
+    )
+    
+    other_available_qty = fields.Integer(
+        string='Other Available',
+        compute='_compute_quantities',
+        store=False,
+        help='Physical quantity available in other internal locations'
+    )
 
     
     @api.depends('product_id', 'order_id.warehouse_id', 'product_uom_qty')
     def _compute_quantities(self):
-        """Compute on-hand and available quantities at the order warehouse stock location"""
+        """Compute on-hand and available quantities at the order warehouse stock location and other warehouses"""
         for line in self:
             line.on_hand_qty = 0.0
             line.available_qty = 0.0
+            line.other_on_hand_qty = 0.0
+            line.other_available_qty = 0.0
             
             if not line.product_id:
                 continue
-            
-            # Use order warehouse stock location
+                
             target_location = (line.order_id.warehouse_id and line.order_id.warehouse_id.lot_stock_id)
+            
+            # --- 1. Other Warehouses Calculation ---
+            if target_location:
+                other_domain = [
+                    ('product_id', '=', line.product_id.id),
+                    ('location_id.usage', '=', 'internal'),
+                    '!', ('location_id', 'child_of', target_location.id)
+                ]
+            else:
+                other_domain = [
+                    ('product_id', '=', line.product_id.id),
+                    ('location_id.usage', '=', 'internal')
+                ]
+                
+            other_quants = self.env['stock.quant'].search(other_domain)
+            line.other_on_hand_qty = sum(other_quants.mapped('quantity'))
+            
+            # For other warehouses, this order doesn't affect their availability (since it's not pulling from them)
+            total_other_available = sum(other_quants.mapped('available_quantity'))
+            line.other_available_qty = max(total_other_available, -999)
+            
+            # --- 2. Specific Warehouse Calculation ---
             if not target_location:
                 continue
             
@@ -55,18 +92,17 @@ class SaleOrderLine(models.Model):
             # Available base: sum of available_quantity (quantity not reserved in warehouse)
             total_available = sum(quants.mapped('available_quantity'))
 
-            # If order is already confirmed, do NOT subtract this order's lines again
-            # because reservations are already reflected in available_quantity.
             is_confirmed = line.order_id.state in ('sale', 'done')
+            saved_lines = line.order_id.order_line.filtered(lambda l: l.product_id == line.product_id and l.id)
+            saved_qty = sum(saved_lines.mapped('product_uom_qty'))
+            current_line_qty = line.product_uom_qty if not line.id else 0
+
+            # If order is already confirmed, do NOT subtract this order's lines again
             if is_confirmed:
                 line.available_qty = max(total_available, -999)
                 continue
 
             # Draft/sent quotation: show preview by subtracting saved lines and the current unsaved line
-            saved_lines = line.order_id.order_line.filtered(lambda l: l.product_id == line.product_id and l.id)
-            saved_qty = sum(saved_lines.mapped('product_uom_qty'))
-            current_line_qty = line.product_uom_qty if not line.id else 0
-
             line.available_qty = max(total_available - saved_qty - current_line_qty, -999)
     
     @api.depends('product_id', 'order_id.warehouse_id', 'product_uom_qty')

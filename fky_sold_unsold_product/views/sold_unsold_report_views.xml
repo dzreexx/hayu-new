@@ -17,7 +17,6 @@
                     <field name="date_to"/>
                     <field name="total_sold_products"/>
                     <field name="total_unsold_products"/>
-                    <field name="categ_ids" widget="many2many_tags" optional="hide"/>
                     <field name="internal_category_ids" widget="many2many_tags" optional="hide"/>
                     <field name="customer_ids" widget="many2many_tags" optional="hide"/>
                     <field name="state" widget="badge" decoration-success="state == 'generated'" decoration-info="state == 'draft'"/>
@@ -37,13 +36,13 @@
                                 type="object"
                                 class="oe_highlight"
                                 states="draft"/>
+                        <button name="action_generate_report"
+                                string="Regenerate Report"
+                                type="object"
+                                class="oe_highlight"
+                                states="generated"/>
                         <button name="action_export_excel"
                                 string="Export to Excel"
-                                type="object"
-                                class="btn-secondary"
-                                states="generated"/>
-                        <button name="action_reset_draft"
-                                string="Reset to Draft"
                                 type="object"
                                 class="btn-secondary"
                                 states="generated"/>
@@ -65,7 +64,6 @@
                                 <field name="date_from" attrs="{'readonly': ['|', ('filter_type', '=', 'monthly'), ('state', '=', 'generated')], 'required': [('filter_type', '=', 'custom')]}"/>
                                 <field name="date_to" attrs="{'readonly': ['|', ('filter_type', '=', 'monthly'), ('state', '=', 'generated')], 'required': [('filter_type', '=', 'custom')]}"/>
                                 <field name="report_type" widget="radio" attrs="{'readonly': [('state', '=', 'generated')]}"/>
-                                <field name="categ_ids" widget="many2many_tags" options="{'no_create': True}" placeholder="All product categories" attrs="{'readonly': [('state', '=', 'generated')]}"/>
                                 <field name="internal_category_ids" widget="many2many_tags" options="{'no_create': True}" placeholder="All internal categories" attrs="{'readonly': [('state', '=', 'generated')]}"/>
                                 <field name="customer_ids" widget="many2many_tags" options="{'no_create': True}" placeholder="All customers" domain="[('customer_rank', '>', 0)]" attrs="{'readonly': [('state', '=', 'generated')]}"/>
                                 <field name="total_sold_products" readonly="1" attrs="{'invisible': [('report_type', '=', 'unsold')]}"/>
@@ -78,11 +76,11 @@
                                     <tree string="Products Sold">
                                         <field name="product_name"/>
                                         <field name="default_code"/>
-                                        <field name="categ_id"/>
                                         <field name="internal_category_id"/>
                                         <field name="sold_qty" sum="Total Qty Sold"/>
                                         <field name="sold_amount" widget="monetary" sum="Total Amount"/>
                                         <field name="order_count" sum="Total Orders"/>
+                                        <button name="action_view_invoices" type="object" icon="fa-list" title="View Invoices" class="btn-primary" attrs="{'invisible': [('order_count', '=', 0)]}"/>
                                         <field name="qty_available"/>
                                         <field name="list_price" widget="monetary" optional="hide"/>
                                         <field name="last_sale_date"/>
@@ -100,7 +98,6 @@
                                     <tree string="Products Not Sold">
                                         <field name="product_name"/>
                                         <field name="default_code"/>
-                                        <field name="categ_id"/>
                                         <field name="internal_category_id"/>
                                         <field name="qty_available"/>
                                         <field name="list_price" widget="monetary"/>
@@ -125,7 +122,6 @@
                     <field name="name"/>
                     <field name="month"/>
                     <field name="year"/>
-                    <field name="categ_ids"/>
                     <field name="internal_category_ids"/>
                     <field name="customer_ids"/>
                     <filter string="This Year" name="this_year"
@@ -166,14 +162,5 @@
                   parent="aos_notify_stock.stock_notify_dashboard_menu"
                   action="action_sold_unsold_report"
                   sequence="100"/>
-
-        <!-- Cleanup Menu Item (Admin Only) -->
-        <menuitem id="menu_cleanup_old_reports"
-                  name="Delete Old Sales Reports"
-                  parent="aos_notify_stock.stock_notify_dashboard_menu"
-                  action="action_cleanup_old_sold_unsold_reports"
-                  groups="base.group_system"
-                  sequence="101"/>
-
     </data>
 </odoo>
