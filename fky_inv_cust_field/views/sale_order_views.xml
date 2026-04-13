@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Inherit Sale Order Form View -->
+        <record id="view_order_form_special_instruction" model="ir.ui.view">
+            <field name="name">sale.order.form.special.instruction</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="arch" type="xml">
+                <!-- Add field below payment_term_id -->
+                <xpath expr="//field[@name='payment_term_id']" position="after">
+                    <field name="special_instruction" placeholder="Enter special instructions..."/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Inherit Sale Order Tree View -->
+        <record id="view_order_tree_special_instruction" model="ir.ui.view">
+            <field name="name">sale.order.tree.special.instruction</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_tree"/>
+            <field name="arch" type="xml">
+                <!-- Add field to tree view with optional visibility -->
+                <xpath expr="//field[@name='activity_ids']" position="before">
+                    <field name="special_instruction" optional="show"/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>
