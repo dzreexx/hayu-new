@@ -9,7 +9,8 @@
             <field name="arch" type="xml">
                 <!-- Add field below payment_term_id -->
                 <xpath expr="//field[@name='payment_term_id']" position="after">
-                    <field name="special_instruction" placeholder="Enter special instructions..."/>
+                    <field name="special_instruction" placeholder="Enter special instructions..."
+                           attrs="{'invisible': [('invoice_status', '=', 'invoiced')]}"/>
                 </xpath>
             </field>
         </record>

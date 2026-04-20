@@ -1,30 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <!-- Inherit Invoice Form View -->
+        <!-- The user requested that the field should only show before creating the invoice (i.e. on the Sales Order)
+             So we are disabling the field on the Invoice form and tree views completely. -->
+        <!--
         <record id="view_move_form_special_instruction" model="ir.ui.view">
             <field name="name">account.move.form.special.instruction</field>
             <field name="model">account.move</field>
             <field name="inherit_id" ref="account.view_move_form"/>
             <field name="arch" type="xml">
-                <!-- Add field below invoice_payment_term_id -->
-                <xpath expr="//field[@name='invoice_payment_term_id']" position="after">
+                <xpath expr="//field[@name='invoice_date_due']" position="after">
                     <field name="special_instruction" placeholder="Special instructions from sale order"/>
                 </xpath>
             </field>
         </record>
 
-        <!-- Inherit Invoice Tree View -->
         <record id="view_invoice_tree_special_instruction" model="ir.ui.view">
             <field name="name">account.move.tree.special.instruction</field>
             <field name="model">account.move</field>
             <field name="inherit_id" ref="account.view_invoice_tree"/>
             <field name="arch" type="xml">
-                <!-- Add field to tree view with optional visibility -->
                 <xpath expr="//field[@name='activity_ids']" position="before">
                     <field name="special_instruction" optional="hide"/>
                 </xpath>
             </field>
         </record>
+        -->
     </data>
 </odoo>
