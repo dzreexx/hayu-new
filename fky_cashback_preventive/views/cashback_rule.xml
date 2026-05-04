@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_cashback_rule_form_preventive" model="ir.ui.view">
+        <field name="name">cashback.rule.form.preventive</field>
+        <field name="model">cashback.rule</field>
+        <field name="inherit_id" ref="aos_cashback.cashback_rule_form"/>
+        <field name="arch" type="xml">
+            
+            <xpath expr="//notebook/page[1]" position="inside">
+                <field name="is_quarter_locked" invisible="1"/>
+                <field name="is_month_locked" invisible="1"/>
+            </xpath>
+            
+            <!-- Insert generation statuses right before the generate buttons div -->
+            <xpath expr="//div[button[@name='compute_6month_cashback']]" position="before">
+                <!-- Informasi Quarter Generation Status -->
+                <div style="margin-top: 10px; padding: 10px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px;" 
+                     attrs="{'invisible': [('is_quarter_locked','=', False)]}">
+                    <strong>Status Quarter Generation:</strong>
+                    <div style="margin-top: 5px;">
+                        <span style="color: #28a745;">✓ Quarter telah di-generate</span><br/>
+                        <span>Quarter: <strong><field name="quarter_generation_quarter" readonly="1"/></strong></span><br/>
+                        <span>Tahun: <strong><field name="quarter_generation_year" readonly="1"/></strong></span><br/>
+                        <span>Tanggal Generate: <strong><field name="quarter_generation_date" readonly="1"/></strong></span>
+                    </div>
+                </div>
+                
+                <!-- Informasi Monthly Generation Status -->
+                <div style="margin-top: 10px; padding: 10px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px;" 
+                     attrs="{'invisible': [('is_month_locked','=', False)]}">
+                    <strong>Status Monthly Generation:</strong>
+                    <div style="margin-top: 5px;">
+                        <span style="color: #28a745;">✓ Monthly telah di-generate</span><br/>
+                        <span>Bulan: <strong><field name="month_generation_month" readonly="1"/></strong></span><br/>
+                        <span>Tahun: <strong><field name="month_generation_year" readonly="1"/></strong></span><br/>
+                        <span>Tanggal Generate: <strong><field name="month_generation_date" readonly="1"/></strong></span>
+                    </div>
+                </div>
+            </xpath>
+
+            <!-- Hide original standard buttons if generated -->
+            <xpath expr="//button[@name='compute_quarter_cashback']" position="attributes">
+                <attribute name="attrs">{'invisible': [('is_quarter_locked','=', True)]}</attribute>
+            </xpath>
+            
+            <xpath expr="//button[@name='compute_month_cashback']" position="attributes">
+                <attribute name="attrs">{'invisible': [('is_month_locked','=', True)]}</attribute>
+            </xpath>
+
+            <!-- Add replacement gray buttons and admin reset buttons -->
+            <xpath expr="//button[@name='compute_quarter_cashback']" position="after">
+                <button class="btn-secondary" name="compute_quarter_cashback" string="Quarterly (Sudah Generated)" type="object" style="margin-left: 5px;" 
+                        attrs="{'invisible': [('is_quarter_locked','=', False)]}" readonly="1"/>
+            </xpath>
+            
+            <xpath expr="//button[@name='compute_month_cashback']" position="after">
+                <button class="btn-secondary" name="compute_month_cashback" string="Monthly (Sudah Generated)" type="object" style="margin-left: 5px;" 
+                        attrs="{'invisible': [('is_month_locked','=', False)]}" readonly="1"/>
+            </xpath>
+
+            <!-- Add reset buttons restricted to admin group -->
+            <xpath expr="//div[button[@name='compute_6month_cashback']]" position="inside">
+                <button class="btn-warning" name="reset_quarter_generation" string="Reset Quarter Generation" type="object" style="margin-left: 5px;" 
+                        attrs="{'invisible': [('is_quarter_locked','=', False)]}" groups="base.group_system"
+                        confirm="Apakah Anda yakin ingin reset quarter generation? Ini akan memungkinkan generate quarter lagi."/>
+                        
+                <button class="btn-warning" name="reset_month_generation" string="Reset Monthly Generation" type="object" style="margin-left: 5px;" 
+                        attrs="{'invisible': [('is_month_locked','=', False)]}" groups="base.group_system"
+                        confirm="Apakah Anda yakin ingin reset monthly generation? Ini akan memungkinkan generate monthly lagi."/>
+            </xpath>
+
+        </field>
+    </record>
+</odoo>

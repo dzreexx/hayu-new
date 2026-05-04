@@ -66,9 +66,8 @@ class ProductTemplate(models.Model):
     @api.depends('sale_per_month','qty_on_hand_query','product_variant_ids.qty_available')
     def _compute_sales_qty(self):
         for rec in self:
-            month = self.min_months(fields.datetime.today(),rec.sale_per_month)
-            # month = fields.datetime.today() - relativedelta(month=rec.sale_per_month)
-            sale_line_obj = self.env['sale.order.line'].search([('product_id.product_tmpl_id','in',rec.ids),('order_id.date_order','>=', month)])
+            target_date = fields.datetime.today() - relativedelta(months=rec.sale_per_month or 0)
+            sale_line_obj = self.env['sale.order.line'].search([('product_id.product_tmpl_id','in',rec.ids),('order_id.date_order','>=', target_date)])
             rec.sales_qty_count = sum(sale_line_obj.mapped('qty_delivered'))
             # update calculation
             # (On Hand + Incoming Qty) operator _percent_ * qty_sales
