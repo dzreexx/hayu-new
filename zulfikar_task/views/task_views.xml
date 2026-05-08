@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- <record id="view_zulfikar_task_form" model="ir.ui.view">
+        <field name="name">zulfikar.task.form</field>
+        <field name="model">zulfikar.task</field>
+        <field name="arch" type="xml">
+            <form string="Tugas">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="date"/>
+                        </group>
+                        <group>
+                            <field name="is_done"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="description"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record> -->
+
+    <record id="view_zulfikar_task_tree" model="ir.ui.view">
+        <field name="name">zulfikar.task.tree</field>
+        <field name="model">zulfikar.task</field>
+        <field name="arch" type="xml">
+            <tree string="Daftar Tugas" create="0">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="is_done"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_zulfikar_task" model="ir.actions.act_window">
+        <field name="name">Tugas Harian</field>
+        <field name="res_model">zulfikar.task</field>
+        <field name="view_mode">tree</field>
+    </record>
+
+    <menuitem id="menu_zulfikar_task_root" 
+              name="Task Manager" 
+              sequence="10" 
+              action="action_zulfikar_task"/>
+
+</odoo>
