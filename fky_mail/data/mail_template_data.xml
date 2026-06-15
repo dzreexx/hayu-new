@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="email_template_mass_invoice" model="mail.template">
+            <field name="name">Mass Invoice Notification</field>
+            <field name="model_id" ref="model_fky_mail"/>
+            <field name="subject">{{object.subject}}</field>
+            <field name="email_from">{{object.env.user.email_formatted | safe}}</field>
+            <field name="body_html" type="html">
+                <div>
+                    <p>Dear <t t-esc="object.partner_ids and object.partner_ids[0].name or 'Customer'"/>,</p>
+                    <p>Please find attached the following invoices:</p>
+                    <br/>
+                    <!-- Call the helper method on the wizard to generate invoice numbers list -->
+                    <t t-raw="object.get_invoice_numbers()"/>
+                    <br/>
+                    <p>Thank you,</p>
+                    <p><t t-esc="object.env.user.signature or ''"/></p>
+                </div>
+            </field>
+        </record>
+
+        <record id="email_template_invoice_indonesian" model="mail.template">
+            <field name="name">Notifikasi Invoice (Indonesian)</field>
+            <field name="model_id" ref="model_fky_mail"/>
+            <field name="subject">Invoice tanggal {{object.get_invoice_dates()}}</field>
+            <field name="is_mass_pdf_default" eval="True"/>
+            <field name="email_from">{{object.env.user.email_formatted | safe}}</field>
+            <field name="body_html" type="html">
+                <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; color: #333333; line-height: 1.6;">
+                    <p style="margin-top: 0; margin-bottom: 15px;">Selamat siang,</p>
+                    <p style="margin-bottom: 20px;">Berikut kami lampirkan Invoice:</p>
+                    
+                    <div style="margin-bottom: 25px;">
+                        <!-- Call the helper method on the wizard to generate invoice numbers list -->
+                        <t t-raw="object.get_invoice_numbers()"/>
+                    </div>
+                    
+                    <p style="margin-bottom: 25px;">Terimakasih</p>
+                    
+                    <div style="padding-top: 15px; color: #555555;">
+                        <p style="margin: 0;">Hormat kami,</p>
+                        <p style="margin: 5px 0 0 0; font-weight: bold; color: #333333;"><t t-esc="object.env.user.name"/></p>
+                    </div>
+                </div>
+            </field>
+        </record>
+    </data>
+</odoo>

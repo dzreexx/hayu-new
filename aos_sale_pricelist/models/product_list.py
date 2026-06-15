@@ -20,8 +20,10 @@ class ProductPricelist(models.Model):
     
     def write(self,vals):
         res = super(ProductPricelist,self).write(vals)
-        for rec in self.item_ids:
-            if rec.compute_price == 'percentage':
-                if rec.percent_price > self.max_discount:
-                    raise UserError(_(f'Discount Maximum Is {self.max_discount} %' ))
+        for record in self:
+            # for rec in self.item_ids: kode lama
+            for rec in record.item_ids:
+                if rec.compute_price == 'percentage':
+                    if rec.percent_price > record.max_discount:
+                        raise UserError(_(f'Discount Maximum Is {record.max_discount} %' ))
         return res

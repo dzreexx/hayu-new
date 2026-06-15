@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Wizard popup view -->
+    <record id="view_fky_backorder_alert_wizard_form" model="ir.ui.view">
+        <field name="name">fky.backorder.alert.wizard.form</field>
+        <field name="model">fky.backorder.alert.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Pending Backorders">
+                <field name="sale_order_id" invisible="1"/>
+                <div class="alert alert-warning mb-2" role="alert">
+                    <strong>The following products from this quotation are already in pending backorders for <field name="partner_id" readonly="1" nolabel="1" class="d-inline"/>:</strong>
+                </div>
+                <field name="line_ids" readonly="1" nolabel="1">
+                    <tree>
+                        <field name="product_id"/>
+                        <field name="backorder_qty" string="Qty in Backorder"/>
+                        <field name="backorder_count" string="# Backorders"/>
+                    </tree>
+                </field>
+                <footer>
+                    <button name="action_view_transfers" type="object"
+                            string="View Transfers" class="btn-secondary"/>
+                    <button string="Close" class="btn-primary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+
+
+    <record id="view_sale_order_fky_backorder_btn" model="ir.ui.view">
+        <field name="name">sale.order.fky.backorder.btn</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_fky_view_backorder_details"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-exclamation-triangle"
+                        attrs="{'invisible': [('fky_backorder_count', '=', 0)]}">
+                    <field name="fky_backorder_count" widget="statinfo"
+                           string="Product(s) in Backorder"/>
+                </button>
+            </xpath>
+        </field>
+    </record>
+</odoo>

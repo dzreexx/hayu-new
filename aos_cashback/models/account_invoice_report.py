@@ -6,8 +6,8 @@ import json
 class AccountInvoiceReport(models.Model):
     _inherit = "account.invoice.report"
 
-    customer_group_id = fields.Many2one("adireksa.customer.target", related="move_id.customer_group_id",string="Customer Group",readonly=True,store=True)
-
+    # customer_group_id = fields.Many2one("adireksa.customer.target", related="move_id.customer_group_id",string="Customer Group",readonly=True,store=True)
+    customer_group_id = fields.Many2one("adireksa.customer.target", string="Customer Group", readonly=True)
     def _select(self):
           res = super(AccountInvoiceReport,self)._select()
           res += """,move.customer_group_id"""

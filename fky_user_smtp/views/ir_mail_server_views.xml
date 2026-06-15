@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Form view: add user_id field next to from_filter -->
+    <record id="ir_mail_server_form_inherit_user_smtp" model="ir.ui.view">
+        <field name="name">ir.mail_server.form.inherit.user.smtp</field>
+        <field name="model">ir.mail_server</field>
+        <field name="inherit_id" ref="base.ir_mail_server_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='from_filter']" position="after">
+                <field name="user_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Tree view: add user_id column after smtp_user -->
+    <record id="ir_mail_server_list_inherit_user_smtp" model="ir.ui.view">
+        <field name="name">ir.mail_server.tree.inherit.user.smtp</field>
+        <field name="model">ir.mail_server</field>
+        <field name="inherit_id" ref="base.ir_mail_server_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='smtp_user']" position="after">
+                <field name="user_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Search view: add user_id filter and group by -->
+    <record id="ir_mail_server_search_inherit_user_smtp" model="ir.ui.view">
+        <field name="name">ir.mail_server.search.inherit.user.smtp</field>
+        <field name="model">ir.mail_server</field>
+        <field name="inherit_id" ref="base.view_ir_mail_server_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='smtp_encryption']" position="after">
+                <field name="user_id"/>
+            </xpath>
+            <xpath expr="//filter[@name='inactive']" position="before">
+                <filter string="Bound User" name="group_by_user" context="{'group_by': 'user_id'}"/>
+                <separator/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
