@@ -253,39 +253,7 @@ class sale_order(models.Model):
         return base_url
 
     def send_mail_approve_credit_limit(self): 
-        manager_group_id = self.env['ir.model.data']._xmlid_to_res_id('sales_team.group_sale_manager', raise_if_not_found=False)
-        #users = self.env['res.users'].browse(default_user_id).sudo().groups_id if default_user_id else []
-        # ir_model_data = self.env['ir.model.data']
-        # if not self.user_has_groups('sales_team.group_sale_manager'):
-        # manager_group_id = self.env['ir.model.data'].get_object_reference('sales_team', 'group_sale_manager')[1]
-        # template_id = ir_model_data.get_object_reference('aos_subscription_contract', 'email_template_edi_subscription_contract')[1]
-        browse_group = self.env['res.groups'].browse(manager_group_id) 
-        partner_id = self.partner_id
-        if self.partner_id.parent_id:
-            partner_id = self.partner_id.parent_id
-        
-        url = self._make_url('sale.order')
-        subject = self.name + '-' + 'Require to Credit Limit Approval'
-        for user in browse_group.users:
-            partner = user.partner_id
-            body = '''
-                        <b>Dear ''' " %s</b>," % (partner.name) + '''
-                        <p> A Sale Order ''' "<b><i>%s</i></b>" % self.name + '''  for customer ''' "<b><i>%s</i></b>" % partner_id.name +''' require your Credit Limit Approval.</p> 
-                        <p>You can access sale order from  below url <br/>
-                        ''' "%s" % url +''' </p> 
-                        
-                        <p><b>Regards,</b> <br/>
-                        ''' "<b><i>%s</i></b>" % self.user_id.name +''' </p> 
-                        ''' 
-            
-            mail_values = {
-                        'email_from': self.user_id.email,
-                        'email_to': partner.email,
-                        'subject': subject,
-                        'body_html': body,
-                        'state': 'outgoing',
-                    }
-            mail_id =self.env['mail.mail'].sudo().create(mail_values)
-            mail_id.sudo().send(True)
+        # Email notification disabled per user request
+        return True
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
