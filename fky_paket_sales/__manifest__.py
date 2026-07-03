@@ -1,6 +1,6 @@
 {
     'name': 'FKY Paket Sales Target',
-    'version': '15.0.1.0.0',
+    'version': '15.0.1.1.0',
     'category': 'Sales',
     'summary': 'Track committed sales packages against invoiced quantity',
     'description': """

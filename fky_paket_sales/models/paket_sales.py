@@ -31,6 +31,38 @@ class FkyPaketSales(models.Model):
 
     company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.company)
 
+    template_ids = fields.Many2many(
+        'fky.paket.sales.template', string='Apply Templates')
+
+    @api.onchange('template_ids')
+    def _onchange_template_ids(self):
+        if self.template_ids:
+            lines = [(5, 0, 0)]
+            for tmpl in self.template_ids:
+                for cat in tmpl.internal_category_ids:
+                    lines.append((0, 0, {
+                        'internal_category_id': cat.id,
+                        'target_qty': tmpl.target_qty,
+                    }))
+            self.line_ids = lines
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('template_ids') and vals.get('template_ids')[0][2] and not vals.get('line_ids'):
+                tmpl_ids = vals['template_ids'][0][2]
+                templates = self.env['fky.paket.sales.template'].browse(tmpl_ids)
+                line_vals = []
+                for tmpl in templates:
+                    for cat in tmpl.internal_category_ids:
+                        line_vals.append((0, 0, {
+                            'internal_category_id': cat.id,
+                            'target_qty': tmpl.target_qty,
+                        }))
+                if line_vals:
+                    vals['line_ids'] = line_vals
+        return super().create(vals_list)
+
     @api.depends('line_ids.target_qty', 'line_ids.current_qty_so', 'line_ids.current_qty_inv')
     def _compute_totals(self):
         for record in self:
@@ -83,19 +115,26 @@ class FkyPaketSales(models.Model):
 
     def action_running(self):
         self.write({'state': 'running'})
+        self._compute_progress()
 
     def action_done(self):
+        self._compute_progress()
         for record in self:
             all_achieved = True
             for line in record.line_ids:
                 if line.progress_inv < 100:
                     all_achieved = False
                     break
-            
             if all_achieved:
                 record.write({'state': 'done'})
             else:
                 record.write({'state': 'partially_done'})
+
+    def _compute_progress(self):
+        self.line_ids._compute_current_qty()
+        self._compute_totals()
+        self._compute_progress_html()
+        self.line_ids._compute_progress_html()
 
     def action_cancel(self):
         self.write({'state': 'cancel'})
@@ -109,9 +148,9 @@ class FkyPaketSalesLine(models.Model):
     _description = 'Paket Sales Commitment Line'
 
     paket_id = fields.Many2one('fky.paket.sales', string='Paket Sales Reference', required=True, ondelete='cascade')
-    internal_category_ids = fields.Many2many('internal.category', string='Internal Categories', required=True)
+    internal_category_id = fields.Many2one('internal.category', string='Internal Category', required=True)
     
-    target_qty = fields.Integer(string='Target (Pcs)', required=True, default=1000)
+    target_qty = fields.Integer(string='Target (Pcs)', required=True, default=0)
     current_qty_so = fields.Integer(string='SO Qty', compute='_compute_current_qty')
     current_qty_inv = fields.Integer(string='Invoiced Qty', compute='_compute_current_qty')
     progress_so = fields.Integer(string='SO Progress (%)', compute='_compute_current_qty')
@@ -119,10 +158,10 @@ class FkyPaketSalesLine(models.Model):
     progress_so_html = fields.Html(string='SO Progress', compute='_compute_progress_html')
     progress_inv_html = fields.Html(string='Inv Progress', compute='_compute_progress_html')
 
-    @api.depends('paket_id.customer_group_id', 'internal_category_ids', 'paket_id.date_start', 'paket_id.date_end')
+    @api.depends('paket_id.customer_group_id', 'internal_category_id', 'paket_id.date_start', 'paket_id.date_end', 'paket_id.state')
     def _compute_current_qty(self):
         for record in self:
-            if not record.paket_id.customer_group_id or not record.paket_id.date_start or not record.paket_id.date_end or not record.internal_category_ids:
+            if record.paket_id.state in ('draft', 'cancel') or not record.paket_id.customer_group_id or not record.paket_id.date_start or not record.paket_id.date_end or not record.internal_category_id:
                 record.current_qty_so = 0
                 record.current_qty_inv = 0
                 record.progress_so = 0
@@ -131,8 +170,8 @@ class FkyPaketSalesLine(models.Model):
             
             domain_category = [
                 '|',
-                ('internal_category', 'in', record.internal_category_ids.ids),
-                ('product_id.internal_category', 'in', record.internal_category_ids.ids)
+                ('internal_category', '=', record.internal_category_id.id),
+                ('product_id.internal_category', '=', record.internal_category_id.id)
             ]
             
             # SO calculation
