@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_fky_paket_sales_user,fky.paket.sales.user,model_fky_paket_sales,sales_team.group_sale_salesman,1,1,1,0
+access_fky_paket_sales_manager,fky.paket.sales.manager,model_fky_paket_sales,sales_team.group_sale_manager,1,1,1,1
+access_fky_paket_sales_line_user,fky.paket.sales.line.user,model_fky_paket_sales_line,sales_team.group_sale_salesman,1,1,1,0
+access_fky_paket_sales_line_manager,fky.paket.sales.line.manager,model_fky_paket_sales_line,sales_team.group_sale_manager,1,1,1,1
+access_fky_paket_sales_template_user,fky.paket.sales.template.user,model_fky_paket_sales_template,sales_team.group_sale_salesman,1,1,1,0
+access_fky_paket_sales_template_manager,fky.paket.sales.template.manager,model_fky_paket_sales_template,sales_team.group_sale_manager,1,1,1,1

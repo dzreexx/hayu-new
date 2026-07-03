@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Form View -->
+    <record id="view_fky_paket_sales_form" model="ir.ui.view">
+        <field name="name">fky.paket.sales.form</field>
+        <field name="model">fky.paket.sales</field>
+        <field name="arch" type="xml">
+            <form string="Paket Sales">
+                <header>
+                    <button string="Set to Running" name="action_running" states="draft" type="object" class="btn-primary"/>
+                    <button string="Set to Done" name="action_done" states="running" type="object" class="btn-success"/>
+                    <button string="Cancel" name="action_cancel" states="draft,running" type="object"/>
+                    <button string="Set to Draft" name="action_draft" states="cancel" type="object"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,running,partially_done,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Name/Reference (e.g. Paket Q1 Promo)" attrs="{'readonly': [('state', 'in', ('done', 'partially_done'))]}"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="customer_group_id" attrs="{'readonly': [('state', 'in', ('done', 'partially_done'))]}"/>
+                            <field name="template_ids" widget="many2many_tags" options="{'no_create': True}" attrs="{'readonly': [('state', 'in', ('done', 'partially_done'))]}"/>
+                            <field name="company_id" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="date_start" attrs="{'readonly': [('state', 'in', ('done', 'partially_done'))]}"/>
+                            <field name="date_end" attrs="{'readonly': [('state', 'in', ('done', 'partially_done'))]}"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Commitment Lines" name="lines">
+                            <field name="line_ids" attrs="{'readonly': [('state', 'in', ('done', 'partially_done'))]}">
+                                <tree editable="bottom">
+                                    <field name="internal_category_id" required="1"/>
+                                    <field name="target_qty" sum="Total Target" optional="show"/>
+                                    <field name="current_qty_so" sum="Total SO" optional="show"/>
+                                    <field name="progress_so_html" string="SO Progress" widget="html" optional="show"/>
+                                    <field name="current_qty_inv" sum="Total Invoiced" optional="show"/>
+                                    <field name="progress_inv_html" string="Inv Progress" widget="html" optional="show"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                    
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Tree View -->
+    <record id="view_fky_paket_sales_tree" model="ir.ui.view">
+        <field name="name">fky.paket.sales.tree</field>
+        <field name="model">fky.paket.sales</field>
+        <field name="arch" type="xml">
+            <tree string="Paket Sales">
+                <field name="name"/>
+                <field name="customer_group_id"/>
+                <field name="date_start" optional="show"/>
+                <field name="date_end" optional="show"/>
+                <field name="target_qty" sum="Total Target" optional="show"/>
+                <field name="current_qty_so" sum="Total SO" optional="show"/>
+                <field name="current_qty_inv" sum="Total Invoiced" optional="show"/>
+                <field name="state" widget="badge" decoration-success="state == 'done'" decoration-warning="state == 'partially_done'" decoration-info="state == 'running'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_fky_paket_sales_search" model="ir.ui.view">
+        <field name="name">fky.paket.sales.search</field>
+        <field name="model">fky.paket.sales</field>
+        <field name="arch" type="xml">
+            <search string="Search Paket Sales">
+                <field name="name"/>
+                <field name="customer_group_id"/>
+                <filter string="Running" name="filter_running" domain="[('state', '=', 'running')]"/>
+                <filter string="Done" name="filter_done" domain="[('state', '=', 'done')]"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_fky_paket_sales" model="ir.actions.act_window">
+        <field name="name">Paket Sales Target</field>
+        <field name="res_model">fky.paket.sales</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_fky_paket_sales_search"/>
+        <field name="context">{'search_default_filter_running': 1}</field>
+    </record>
+
+    <!-- Parent category menu (no action — just a container for submenus) -->
+    <menuitem id="menu_fky_paket_sales" 
+              name="Paket Sales" 
+              parent="sale.sale_order_menu" 
+              sequence="12"/>
+
+    <!-- Submenu: Paket Sales Target list -->
+    <menuitem id="menu_fky_paket_sales_target"
+              name="Paket Sales Target"
+              parent="menu_fky_paket_sales"
+              action="action_fky_paket_sales"
+              sequence="10"/>
+
+    <!-- Template Models -->
+    
+    <!-- Template Form View -->
+    <record id="view_fky_paket_sales_template_form" model="ir.ui.view">
+        <field name="name">fky.paket.sales.template.form</field>
+        <field name="model">fky.paket.sales.template</field>
+        <field name="arch" type="xml">
+            <form string="Paket Sales Template">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="e.g. CDI, AS Gear"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="internal_category_ids" widget="many2many_tags" required="1"/>
+                            <field name="target_qty"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Template Tree View -->
+    <record id="view_fky_paket_sales_template_tree" model="ir.ui.view">
+        <field name="name">fky.paket.sales.template.tree</field>
+        <field name="model">fky.paket.sales.template</field>
+        <field name="arch" type="xml">
+            <tree string="Paket Sales Templates">
+                <field name="name"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Template Action -->
+    <record id="action_fky_paket_sales_template" model="ir.actions.act_window">
+        <field name="name">Templates</field>
+        <field name="res_model">fky.paket.sales.template</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Submenu: Templates list -->
+    <menuitem id="menu_fky_paket_sales_template"
+              name="Templates"
+              parent="menu_fky_paket_sales"
+              action="action_fky_paket_sales_template"
+              sequence="20"/>
+
+</odoo>

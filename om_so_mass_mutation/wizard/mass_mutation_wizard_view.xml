@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_sale_order_mutation_wizard_form" model="ir.ui.view">
+            <name>sale.order.mutation.wizard.form</name>
+            <model>sale.order.mutation.wizard</model>
+            <arch type="xml">
+                <form string="Mass Mutation Wizard">
+                    <group>
+                        <group>
+                            <field name="location_id" string="Dari Gudang (Source)"/>
+                        </group>
+                        <group>
+                            <field name="location_dest_id" string="Ke Toko (Destination)"/>
+                        </group>
+                    </group>
+                    <p class="text-muted">
+                        Sistem akan menghitung otomatis semua produk yang minus di Toko berdasarkan SO yang dipilih, lalu membuat draf Internal Transfer.
+                    </p>
+                    <footer>
+                        <button name="generate_consolidated_mutation" string="Buat Draf Mutasi" type="object" class="btn-primary"/>
+                        <button string="Batal" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </form>
+            </arch>
+        </record>
+
+        <record id="action_sale_order_mass_mutation" model="ir.actions.act_window">
+            <name>Proses Mutasi Konsolidasi</name>
+            <res_model>sale.order.mutation.wizard</res_model>
+            <view_mode>form</view_mode>
+            <target>new</target>
+            <binding_model_id ref="sale.model_sale_order"/>
+            <binding_view_types>list</binding_view_types>
+        </record>
+
+    </data>
+</odoo>

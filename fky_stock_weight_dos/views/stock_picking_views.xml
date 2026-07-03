@@ -11,4 +11,16 @@
             </xpath>
         </field>
     </record>
+
+    <record id="view_stock_picking_tree_weight_dos" model="ir.ui.view">
+        <field name="name">stock.picking.tree.weight.dos</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.vpicktree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='scheduled_date']" position="after">
+                <field name="estimated_weight_dos" sum="Estimated Weight" optional="show"/>
+                <field name="total_weight_dos" sum="Total Weight" optional="show"/>
+            </xpath>
+        </field>
+    </record>
 </odoo>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Field 'need_mutation' otomatis recompute saat field milik dokumen ini
+        berubah (qty pesanan, status DO, dll). TAPI perubahan stok akibat
+        transaksi LAIN (SO lain, transfer lain, penerimaan barang, dll) tidak
+        otomatis memicu recompute karena bukan field milik dokumen ini.
+
+        Cron ini menjaga akurasi dengan memaksa recompute berkala untuk semua
+        Delivery Order yang masih aktif (belum Done/Cancel).
+    -->
+    <record id="ir_cron_refresh_need_mutation" model="ir.cron">
+        <field name="name">Stock Mutation Helper: Refresh Need Mutation Status</field>
+        <field name="model_id" ref="stock.model_stock_picking"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_refresh_need_mutation()</field>
+        <field name="interval_number">15</field>
+        <field name="interval_type">minutes</field>
+        <field name="numbercall">-1</field>
+        <field name="active">True</field>
+    </record>
+
+</odoo>

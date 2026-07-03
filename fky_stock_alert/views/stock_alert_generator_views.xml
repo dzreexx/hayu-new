@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Form View -->
+    <record id="view_stock_alert_generator_form" model="ir.ui.view">
+        <field name="name">stock.alert.generator.form</field>
+        <field name="model">stock.alert.generator</field>
+        <field name="arch" type="xml">
+            <form string="Generate Stock Alert Rules">
+                <div class="alert alert-info" role="alert">
+                    This wizard generates minimum quantity alert rules for all saleable products at the selected location. 
+                    The minimum quantity will be set based on each product's <strong>Isi Perdus</strong> field (falling back to 1.0 if not defined).
+                </div>
+                <group>
+                    <field name="location_id" options="{'no_create': True, 'no_open': True}"/>
+                </group>
+                <footer>
+                    <button name="action_generate_rules" string="Generate Rules" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_stock_alert_generator" model="ir.actions.act_window">
+        <field name="name">Generate Stock Alert Rules</field>
+        <field name="res_model">stock.alert.generator</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

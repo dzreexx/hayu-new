@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============ FORM VIEW ============ -->
+    <record id="view_picking_form_inherit_mutation" model="ir.ui.view">
+        <field name="name">stock.picking.form.inherit.mutation</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Tombol aksi: hanya tampil untuk Delivery Order (outgoing) -->
+            <xpath expr="//header" position="inside">
+                <button name="action_check_and_create_mutation"
+                        string="Cek &amp; Buat Mutasi"
+                        type="object"
+                        class="btn-secondary"
+                        attrs="{'invisible': [('picking_type_code', '!=', 'outgoing')]}"
+                        confirm="Sistem akan mengecek kekurangan stok dan membuat Internal Transfer sebagai Draft (belum di-confirm) ke lokasi Transit warehouse tujuan. Silakan cek qty &amp; lokasi, lalu Confirm manual. Lanjutkan?"/>
+            </xpath>
+
+            <!-- Badge status kebutuhan mutasi, di sebelah statusbar -->
+            <xpath expr="//field[@name='state']" position="before">
+                <field name="is_mutation_transfer" invisible="1"/>
+                <field name="need_mutation" widget="badge"
+                       attrs="{'invisible': [('picking_type_code', '!=', 'outgoing')]}"
+                       decoration-danger="need_mutation == 'yes'"
+                       decoration-success="need_mutation == 'no'"/>
+            </xpath>
+
+            <!-- Tab: Internal Transfer yang dibuat untuk Delivery Order ini -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Mutation Transfers" name="mutation_transfers"
+                      attrs="{'invisible': [('mutation_transfer_ids', '=', [])]}">
+                    <field name="mutation_transfer_ids" readonly="1">
+                        <tree>
+                            <field name="name"/>
+                            <field name="picking_type_id"/>
+                            <field name="location_id"/>
+                            <field name="location_dest_id"/>
+                            <field name="state"/>
+                            <field name="scheduled_date"/>
+                        </tree>
+                    </field>
+                </page>
+
+                <!-- Tab: Delivery Order pemicu, khusus untuk dokumen Internal
+                     Transfer hasil auto mutation -->
+                <page string="Delivery Order Terkait" name="source_deliveries"
+                      attrs="{'invisible': ['|', ('is_mutation_transfer', '=', False), ('source_delivery_ids', '=', [])]}">
+                    <field name="source_delivery_ids" readonly="1">
+                        <tree>
+                            <field name="name"/>
+                            <field name="partner_id"/>
+                            <field name="location_id"/>
+                            <field name="state"/>
+                            <field name="need_mutation"/>
+                        </tree>
+                    </field>
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- ============ TREE VIEW (Delivery Orders / Transfers list) ============ -->
+    <record id="view_picking_tree_inherit_mutation" model="ir.ui.view">
+        <field name="name">stock.picking.tree.inherit.mutation</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.vpicktree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='state']" position="before">
+                <field name="need_mutation" widget="badge"
+                       decoration-danger="need_mutation == 'yes'"
+                       decoration-success="need_mutation == 'no'"
+                       optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ============ SEARCH VIEW: filter & group by ============ -->
+    <record id="view_picking_search_inherit_mutation" model="ir.ui.view">
+        <field name="name">stock.picking.search.inherit.mutation</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_internal_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[last()]" position="after">
+                <separator/>
+                <filter string="Butuh Mutasi" name="filter_need_mutation_yes"
+                        domain="[('need_mutation', '=', 'yes')]"/>
+                <filter string="Auto Mutation Transfer" name="filter_is_mutation_transfer"
+                        domain="[('is_mutation_transfer', '=', True)]"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ============ SERVER ACTION: muncul di menu Actions (gear icon) ============ -->
+    <record id="action_server_check_and_create_mutation" model="ir.actions.server">
+        <field name="name">Cek &amp; Buat Mutasi (Internal Transfer)</field>
+        <field name="model_id" ref="stock.model_stock_picking"/>
+        <field name="binding_model_id" ref="stock.model_stock_picking"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_check_and_create_mutation()</field>
+    </record>
+
+</odoo>
