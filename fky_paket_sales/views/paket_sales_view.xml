@@ -109,6 +109,13 @@
               action="action_fky_paket_sales"
               sequence="10"/>
 
+    <!-- NOTE: the former "Refresh All Progress" submenu + server action
+         were replaced by a list-header button next to Create
+         (static/src/js/paket_list_buttons.js calling
+         fky.paket.sales.refresh_all_progress). Their stale DB rows are
+         removed by migrations/15.0.1.7.0/post-migrate.py since Odoo
+         never deletes data records removed from XML. -->
+
     <!-- Template Models -->
     
     <!-- Template Form View -->

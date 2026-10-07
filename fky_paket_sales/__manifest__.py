@@ -1,6 +1,6 @@
 {
     'name': 'FKY Paket Sales Target',
-    'version': '15.0.1.1.0',
+    'version': '15.0.1.8.0',
     'category': 'Sales',
     'summary': 'Track committed sales packages against invoiced quantity',
     'description': """
@@ -13,7 +13,13 @@
         'security/ir.model.access.csv',
         'views/paket_sales_view.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'fky_paket_sales/static/src/js/paket_list_buttons.js',
+        ],
+    },
     'installable': True,
     'auto_install': False,
     'application': False,
+    'uninstall_hook': 'uninstall_hook',
 }

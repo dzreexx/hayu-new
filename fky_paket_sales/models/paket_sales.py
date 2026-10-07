@@ -73,8 +73,8 @@ class FkyPaketSales(models.Model):
             record.current_qty_so = int(total_so)
             record.current_qty_inv = int(total_inv)
             if total_target > 0:
-                record.progress_so = int(min((total_so / total_target) * 100, 100))
-                record.progress_inv = int(min((total_inv / total_target) * 100, 100))
+                record.progress_so = int((total_so / total_target) * 100)
+                record.progress_inv = int((total_inv / total_target) * 100)
             else:
                 record.progress_so = 0
                 record.progress_inv = 0
@@ -87,7 +87,10 @@ class FkyPaketSales(models.Model):
                 bg_color = '#e9ecef'
                 width = min(progress, 100) if progress > 0 else 0
                 
-                if progress >= 100:
+                if progress > 100:
+                    color = '#28a745'
+                    width = 100
+                elif progress >= 100:
                     color = '#007bff'
                     width = 100
                 else:
@@ -116,6 +119,34 @@ class FkyPaketSales(models.Model):
     def action_running(self):
         self.write({'state': 'running'})
         self._compute_progress()
+
+    def action_refresh_progress(self):
+        """Recompute SO/Invoiced totals on demand (header button).
+
+        Header totals are stored snapshots that only refresh on Running /
+        Done clicks or line edits; this lets users refresh a running
+        paket any time (including newly added lines) without a cron.
+        """
+        self._compute_progress()
+
+    @api.model
+    def refresh_all_progress(self):
+        """Recompute every running paket (list header button).
+
+        Returns a success notification action for the web client.
+        """
+        pakets = self.search([('state', '=', 'running')])
+        pakets.action_refresh_progress()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Paket progress refreshed'),
+                'message': _('Recomputed %d running paket(s).') % len(pakets),
+                'type': 'success',
+                'sticky': False,
+            },
+        }
 
     def action_done(self):
         self._compute_progress()
@@ -212,8 +243,8 @@ class FkyPaketSalesLine(models.Model):
             record.current_qty_so = int(total_so)
             record.current_qty_inv = int(total_inv)
             if record.target_qty > 0:
-                record.progress_so = int(min((total_so / record.target_qty) * 100, 100))
-                record.progress_inv = int(min((total_inv / record.target_qty) * 100, 100))
+                record.progress_so = int((total_so / record.target_qty) * 100)
+                record.progress_inv = int((total_inv / record.target_qty) * 100)
             else:
                 record.progress_so = 0
                 record.progress_inv = 0
@@ -226,7 +257,10 @@ class FkyPaketSalesLine(models.Model):
                 bg_color = '#e9ecef'
                 width = min(progress, 100) if progress > 0 else 0
                 
-                if progress >= 100:
+                if progress > 100:
+                    color = '#28a745'
+                    width = 100
+                elif progress >= 100:
                     color = '#007bff'
                     width = 100
                 else:
